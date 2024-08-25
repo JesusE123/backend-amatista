@@ -1,0 +1,20 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+
+# Archivos de configuración de usuario
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Archivos de desarrollo
+*.log
+*.tmp
+*.swp
+
+# Configuración del sistema
+.DS_Store
+Thumbs.db
+appsettings.json
