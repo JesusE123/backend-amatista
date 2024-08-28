@@ -32,7 +32,7 @@ namespace BackendAmatista.Controllers
             {
                 // Generate token if the user is authenticated
                 var token = GenerateToken(user);
-                return Ok(token);
+                return Ok(new { token, userLogin });
             }
             return BadRequest("User or password incorrect");
         }
