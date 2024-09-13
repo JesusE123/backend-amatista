@@ -70,7 +70,7 @@ namespace BackendAmatista.Controllers
                 _config["Jwt:Issuer"],
                 _config["Jwt:Audience"],
                 claims,
-                expires: DateTime.Now.AddMinutes(60),
+                expires: DateTime.Now.AddDays(365),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
