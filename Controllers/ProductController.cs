@@ -19,7 +19,7 @@ namespace BackendAmatista.Controllers
         }
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListProducts([FromQuery] string? query)
+        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit)
         {
             var productsQuery = _dbamatistaContext.Products
                 .Join(
@@ -44,6 +44,12 @@ namespace BackendAmatista.Controllers
                     p.Name.Contains(query) ||
                     p.Item.Contains(query)
                 );
+            }
+
+            // Aplicar límite si se proporciona
+            if (limit.HasValue && limit.Value > 0)
+            {
+                productsQuery = productsQuery.Take(limit.Value);
             }
 
             var productsWithCategories = await productsQuery.ToListAsync();
