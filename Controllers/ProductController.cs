@@ -17,31 +17,40 @@ namespace BackendAmatista.Controllers
         {
             _dbamatistaContext = dbamatistaContext;
         }
-
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListProducts()
+        public async Task<IActionResult> ListProducts([FromQuery] string? query)
         {
-            var productsWithCategories = await _dbamatistaContext.Products
-    .Join(
-        _dbamatistaContext.Categories,
-        product => product.IdCategory,
-        category => category.IdCategory,
-        (product, category) => new
-        {
-            id = product.IdProduct,
-            Name = product.Name,
-            Price = product.Price,
-            Item = product.Item,
-            Stock = product.Stock,
-            CategoryName = category.Name
-        }
-    )
-    .ToListAsync();
+            var productsQuery = _dbamatistaContext.Products
+                .Join(
+                    _dbamatistaContext.Categories,
+                    product => product.IdCategory,
+                    category => category.IdCategory,
+                    (product, category) => new
+                    {
+                        id = product.IdProduct,
+                        Name = product.Name,
+                        Price = product.Price,
+                        Item = product.Item,
+                        Stock = product.Stock,
+                        CategoryName = category.Name
+                    }
+                );
+
+            // Filtrar por nombre de producto si se proporciona el parámetro
+            if (!string.IsNullOrEmpty(query))
+            {
+                productsQuery = productsQuery.Where(p =>
+                    p.Name.Contains(query) ||
+                    p.Item.Contains(query)
+                );
+            }
+
+            var productsWithCategories = await productsQuery.ToListAsync();
 
             return Ok(productsWithCategories);
-
         }
+
 
         [HttpGet]
         [Route("GetProduct/{id:int}")]
