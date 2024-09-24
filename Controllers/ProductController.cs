@@ -168,10 +168,10 @@ namespace BackendAmatista.Controllers
 
             } catch (DbUpdateException ex)
             {
-                // Obtén la excepción interna para ver el detalle del error
+                
                 var innerException = ex.InnerException;
                 Console.WriteLine(innerException?.Message);
-                throw; // Re-lanzar la excepción si es necesario
+                throw; 
             }
 
         }

@@ -1,4 +1,6 @@
-﻿using backend_amatista.Models;
+﻿using AutoMapper;
+using backend_amatista.Models;
+using backend_amatista.Models.DTO;
 using backendAmatista.Models;
 using backendAmatista.Models.DTO;
 using BackendAmatista.Models.DTO;
@@ -14,9 +16,11 @@ namespace backendAmatista.Controllers
     public class SaleController : ControllerBase
     {
         private readonly DbamatistaContext _dbamatistaContext;
-        public SaleController(DbamatistaContext dbamatistaContext)
+        private readonly IMapper _mapper;
+        public SaleController(DbamatistaContext dbamatistaContext, IMapper mapper)
         {
             _dbamatistaContext = dbamatistaContext;
+            _mapper = mapper;
         }
 
 
@@ -24,49 +28,66 @@ namespace backendAmatista.Controllers
         [Route("List")]
         public async Task<IActionResult> ListSales()
         {
-            var sales = await _dbamatistaContext.Sales
-     .Select(s => new
-     {
-         IdSale = s.IdSale,
-         ReceiptNumber = s.InvoiceNumber,
-         Total = s.Total,
-         Customer = s.Customer,
-         PaymentMethod = s.PaymentMethod,
-         Remarks = s.Notes,
-         Date = s.Date
-     })
-     .ToListAsync();
+            var sales = await (from s in _dbamatistaContext.Sales
+                               join sd in _dbamatistaContext.SaleDetails on s.IdSale equals sd.IdSale
+                               join p in _dbamatistaContext.Products on sd.IdProduct equals p.IdProduct
+                               select new
+                               {
+                                   IdSale = s.IdSale,
+                                   ReceiptNumber = s.InvoiceNumber,
+                                   Total = sd.SubTotal, 
+                                   Customer = s.Customer,
+                                   PaymentMethod = s.PaymentMethod,
+                                   Remarks = s.Notes,
+                                   Date = s.Date,
+                                   ProductName = p.Name,
+                                   Quantity = sd.Quantity
+                               }).ToListAsync();
 
             return Ok(sales);
         }
 
+
         [HttpPost]
-        [Route("Create")]
-        public async Task<IActionResult> createSale([FromBody] SaleDTO detail)
+        [Route("CreateSaleDetail")]
+        public async Task<IActionResult> CreateSaleDetail([FromBody] SaleDetailDTO saleDetailDto)
         {
-            if (detail == null)
+            if (saleDetailDto == null)
             {
-                BadRequest("invalid data");
+                return BadRequest("SaleDetailDTO is null");
             }
 
-            var newSale = new Sale
-            {
-                Customer = detail.Customer,
-                InvoiceNumber = detail.InvoiceNumber,
-                Total = detail.Total,
-                PaymentMethod = detail.PaymentMethod,
-                Notes = detail.Notes,
-                
+            // Mapea el DTO a la entidad
+            var saleDetail = _mapper.Map<SaleDetail>(saleDetailDto);
 
-            };
-
-            _dbamatistaContext.Sales.Add(newSale);
+            // Agrega la entidad a la base de datos
+            await _dbamatistaContext.SaleDetails.AddAsync(saleDetail);
             await _dbamatistaContext.SaveChangesAsync();
 
-            
-            
-            return Ok(newSale);
+            // Retorna el resultado
+            return Ok(saleDetail);
+        }
 
+
+
+        [HttpPost]
+        [Route("CreateSale")]
+        public async Task<IActionResult> CreateSale([FromBody] SaleDTO saleDto)
+        {
+            if (saleDto == null)
+            {
+                return BadRequest("SaleDTO is null");
+            }
+
+            // Mapea el DTO a la entidad
+            var sale = _mapper.Map<Sale>(saleDto);
+
+            // Agrega la entidad a la base de datos
+            await _dbamatistaContext.Sales.AddAsync(sale);
+            await _dbamatistaContext.SaveChangesAsync();
+
+            // Retorna el resultado con el ID de la venta creada
+            return Ok(new { IdSale = sale.IdSale }); // Asegúrate de que IdSale sea el nombre correcto de la propiedad
         }
 
 

@@ -9,6 +9,6 @@ namespace backendAmatista.Models.DTO
         public string Customer { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = string.Empty;
         public string? Notes { get; set; }
-        public List<ProductDTO>? Products { get; set; }
+       
     }
 }
