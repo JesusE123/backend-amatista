@@ -17,6 +17,7 @@ namespace BackendAmatista.Controllers
         {
             _dbamatistaContext = dbamatistaContext;
         }
+
         [HttpGet]
         [Route("List")]
         public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit)

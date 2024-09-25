@@ -4,10 +4,9 @@ using backend_amatista.Models.DTO;
 using backendAmatista.Models;
 using backendAmatista.Models.DTO;
 using BackendAmatista.Models.DTO;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.CompilerServices;
+
 
 namespace backendAmatista.Controllers
 {
@@ -79,17 +78,15 @@ namespace backendAmatista.Controllers
                 return BadRequest("SaleDTO is null");
             }
 
-            // Mapea el DTO a la entidad
             var sale = _mapper.Map<Sale>(saleDto);
 
-            // Agrega la entidad a la base de datos
+           
             await _dbamatistaContext.Sales.AddAsync(sale);
             await _dbamatistaContext.SaveChangesAsync();
 
-            // Retorna el resultado con el ID de la venta creada
-            return Ok(new { IdSale = sale.IdSale }); // Asegúrate de que IdSale sea el nombre correcto de la propiedad
+           
+            return Ok(new { IdSale = sale.IdSale });
+
         }
-
-
     }
 }
