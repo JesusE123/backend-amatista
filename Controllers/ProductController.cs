@@ -34,7 +34,7 @@ namespace BackendAmatista.Controllers
                         Price = product.Price,
                         Item = product.Item,
                         Stock = product.Stock,
-                        CategoryName = category.Name
+                        CategoryName = category.IdCategory
                     }
                 );
 
@@ -125,16 +125,15 @@ namespace BackendAmatista.Controllers
             {
                 return BadRequest("Category not found.");
             }
-
             // Create the product
             var product = new Product
             {
-                Name = productDTO.Name,
+                Name = productDTO.Name, 
                 Price = productDTO.Price,
-                Item = productDTO.Item,
+                Item = productDTO.Item, 
                 Stock = productDTO.Stock,
-                IdCategory = productDTO.ID_Category,
-                Active = productDTO.Active
+                IdCategory = productDTO.ID_Category, 
+                Active = productDTO.Active.HasValue ? productDTO.Active.Value : true
             };
 
             // Add the product to the database
@@ -160,21 +159,24 @@ namespace BackendAmatista.Controllers
                 findProduct.Name = product.Name;
                 findProduct.Price = product.Price;
                 findProduct.Item = product.Item;
-                findProduct.Active = product.Active;
+                findProduct.Active = product.Active.HasValue ? product.Active.Value : true;
                 findProduct.Stock = product.Stock;
                 findProduct.IdCategory = product.ID_Category;
 
                 await _dbamatistaContext.SaveChangesAsync();
                 return Ok("Product update Succesfully");
 
-            } catch (DbUpdateException ex)
+            }
+            catch (DbUpdateException ex)
             {
-                
+
                 var innerException = ex.InnerException;
                 Console.WriteLine(innerException?.Message);
-                throw; 
+                throw;
             }
 
         }
+
+
     }
 }
