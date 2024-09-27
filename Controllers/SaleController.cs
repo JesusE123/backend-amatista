@@ -78,15 +78,20 @@ namespace backendAmatista.Controllers
                 return BadRequest("SaleDTO is null");
             }
 
+           
             var sale = _mapper.Map<Sale>(saleDto);
 
-           
+            
+            var nextInvoiceNumber = await _dbamatistaContext.Sales
+                .MaxAsync(s => (int?)s.InvoiceNumber) ?? 0; 
+
+            sale.InvoiceNumber = nextInvoiceNumber + 1; 
+
+            // Insertar la nueva venta
             await _dbamatistaContext.Sales.AddAsync(sale);
             await _dbamatistaContext.SaveChangesAsync();
 
-           
             return Ok(new { IdSale = sale.IdSale });
-
         }
     }
 }
