@@ -20,29 +20,35 @@ namespace BackendAmatista.Controllers
 
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit)
+        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit, [FromQuery] int? idCategory)
         {
             var productsQuery = _dbamatistaContext.Products
-            .Join(
-        _dbamatistaContext.Categories,
-        product => product.IdCategory,
-        category => category.IdCategory,
-        (product, category) => new
-        {
-            id = product.IdProduct,
-            Name = product.Name,
-            Price = product.Price,
-            Item = product.Item,
-            Stock = product.Stock,
-            Category = new
-            {
-                Id = category.IdCategory,    
-                Name = category.Name         
-            }
-        }
-    );
+                .Join(
+                    _dbamatistaContext.Categories,
+                    product => product.IdCategory,
+                    category => category.IdCategory,
+                    (product, category) => new
+                    {
+                        id = product.IdProduct,
+                        Name = product.Name,
+                        Price = product.Price,
+                        Item = product.Item,
+                        Stock = product.Stock,
+                        Category = new
+                        {
+                            Id = category.IdCategory,
+                            Name = category.Name
+                        }
+                    }
+                );
 
-            // Filtrar por nombre de producto si se proporciona el parámetro
+           
+            if (idCategory.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.Category.Id == idCategory.Value);
+            }
+
+            
             if (!string.IsNullOrEmpty(query))
             {
                 productsQuery = productsQuery.Where(p =>
@@ -51,7 +57,7 @@ namespace BackendAmatista.Controllers
                 );
             }
 
-            // Aplicar límite si se proporciona
+            
             if (limit.HasValue && limit.Value > 0)
             {
                 productsQuery = productsQuery.Take(limit.Value);
@@ -61,6 +67,7 @@ namespace BackendAmatista.Controllers
 
             return Ok(productsWithCategories);
         }
+
 
 
         [HttpGet]

@@ -87,7 +87,7 @@ namespace backendAmatista.Controllers
 
             sale.InvoiceNumber = nextInvoiceNumber + 1; 
 
-            // Insertar la nueva venta
+           
             await _dbamatistaContext.Sales.AddAsync(sale);
             await _dbamatistaContext.SaveChangesAsync();
 
