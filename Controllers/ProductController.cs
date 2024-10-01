@@ -23,20 +23,24 @@ namespace BackendAmatista.Controllers
         public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit)
         {
             var productsQuery = _dbamatistaContext.Products
-                .Join(
-                    _dbamatistaContext.Categories,
-                    product => product.IdCategory,
-                    category => category.IdCategory,
-                    (product, category) => new
-                    {
-                        id = product.IdProduct,
-                        Name = product.Name,
-                        Price = product.Price,
-                        Item = product.Item,
-                        Stock = product.Stock,
-                        CategoryName = category.IdCategory
-                    }
-                );
+            .Join(
+        _dbamatistaContext.Categories,
+        product => product.IdCategory,
+        category => category.IdCategory,
+        (product, category) => new
+        {
+            id = product.IdProduct,
+            Name = product.Name,
+            Price = product.Price,
+            Item = product.Item,
+            Stock = product.Stock,
+            Category = new
+            {
+                Id = category.IdCategory,    
+                Name = category.Name         
+            }
+        }
+    );
 
             // Filtrar por nombre de producto si se proporciona el parámetro
             if (!string.IsNullOrEmpty(query))
