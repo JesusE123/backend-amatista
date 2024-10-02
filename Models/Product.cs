@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace backend_amatista.Models;
 
@@ -19,6 +20,7 @@ public partial class Product
 
     public bool Active { get; set; }
 
+    [JsonIgnore]
     public virtual Category IdCategoryNavigation { get; set; } = null!;
 
     public virtual ICollection<SaleDetail> SaleDetails { get; set; } = new List<SaleDetail>();

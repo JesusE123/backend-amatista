@@ -22,7 +22,7 @@ namespace backendAmatista.Controllers
         public async Task<IActionResult> ListCategories()
         {
             var categories = await _dbamatistaContext.Categories
-                .Select(c => new {c.IdCategory, c.Name})
+                .Select(c => new {id = c.IdCategory, c.Name})
                 .ToListAsync();
 
             return Ok(categories);
