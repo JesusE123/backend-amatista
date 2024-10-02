@@ -23,6 +23,7 @@ namespace BackendAmatista.Controllers
         public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit, [FromQuery] int? idCategory)
         {
             var productsQuery = _dbamatistaContext.Products
+                .Where(p => p.Active) // Filtrar solo productos activos
                 .Join(
                     _dbamatistaContext.Categories,
                     product => product.IdCategory,
@@ -42,13 +43,13 @@ namespace BackendAmatista.Controllers
                     }
                 );
 
-           
+            // Filtrar por categoría si se proporciona
             if (idCategory.HasValue)
             {
                 productsQuery = productsQuery.Where(p => p.Category.Id == idCategory.Value);
             }
 
-            
+            // Filtrar por nombre o item si se proporciona un query
             if (!string.IsNullOrEmpty(query))
             {
                 productsQuery = productsQuery.Where(p =>
@@ -57,7 +58,7 @@ namespace BackendAmatista.Controllers
                 );
             }
 
-            
+            // Limitar el número de productos si se proporciona un límite
             if (limit.HasValue && limit.Value > 0)
             {
                 productsQuery = productsQuery.Take(limit.Value);
@@ -67,6 +68,7 @@ namespace BackendAmatista.Controllers
 
             return Ok(productsWithCategories);
         }
+
 
 
 
@@ -104,21 +106,29 @@ namespace BackendAmatista.Controllers
         [Route("Delete/{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            // find id product
+           
             var findProduct = await _dbamatistaContext.Products.FirstOrDefaultAsync(p => p.IdProduct == id);
 
-            // verify if product is null
             if (findProduct == null)
             {
                 return NotFound("Product not found");
             }
 
-            // delete product and save changes
+            
+            var saleDetails = await _dbamatistaContext.SaleDetails
+                .Where(sd => sd.IdProduct == id)
+                .ToListAsync();
+
+            
+            _dbamatistaContext.SaleDetails.RemoveRange(saleDetails);
+
+            
             _dbamatistaContext.Products.Remove(findProduct);
             await _dbamatistaContext.SaveChangesAsync();
 
-            return Ok("Product deleted successfully");
+            return Ok("Product and related sale details deleted successfully");
         }
+
         [HttpPost]
         [Route("Create")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductDTO productDTO)
