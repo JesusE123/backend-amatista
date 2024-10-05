@@ -60,15 +60,25 @@ namespace backendAmatista.Controllers
         [Route("Create")]
         public async Task<IActionResult> CreateCategory([FromBody] CategoryDTO category)
         {
-            if (category == null)
+            if (category == null || string.IsNullOrWhiteSpace(category.Name))
             {
-                BadRequest("Invalid data");
+                return BadRequest("Invalid data");
             }
 
+            
+            var existingCategory = await _dbamatistaContext.Categories
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == category.Name.ToLower());
+
+            if (existingCategory != null)
+            {
+                return Conflict("Category with the same name already exists.");
+            }
+
+           
             var newCategory = new Category
             {
                 Name = category.Name,
-                Active = category.Active,
+                Active = true  
             };
 
             _dbamatistaContext.Categories.Add(newCategory);
@@ -76,5 +86,7 @@ namespace backendAmatista.Controllers
 
             return Ok(newCategory);
         }
+
+
     }
 }
