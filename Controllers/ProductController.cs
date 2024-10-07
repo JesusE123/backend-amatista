@@ -17,13 +17,12 @@ namespace BackendAmatista.Controllers
         {
             _dbamatistaContext = dbamatistaContext;
         }
-
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? limit, [FromQuery] int? idCategory)
+        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? page, [FromQuery] int? limit, [FromQuery] int? idCategory)
         {
             var productsQuery = _dbamatistaContext.Products
-                .Where(p => p.Active) // Filtrar solo productos activos
+                .Where(p => p.Active) 
                 .Join(
                     _dbamatistaContext.Categories,
                     product => product.IdCategory,
@@ -43,13 +42,13 @@ namespace BackendAmatista.Controllers
                     }
                 );
 
-            // Filtrar por categoría si se proporciona
+           
             if (idCategory.HasValue)
             {
                 productsQuery = productsQuery.Where(p => p.Category.Id == idCategory.Value);
             }
 
-            // Filtrar por nombre o item si se proporciona un query
+            
             if (!string.IsNullOrEmpty(query))
             {
                 productsQuery = productsQuery.Where(p =>
@@ -58,16 +57,25 @@ namespace BackendAmatista.Controllers
                 );
             }
 
-            // Limitar el número de productos si se proporciona un límite
-            if (limit.HasValue && limit.Value > 0)
+            
+            int totalItems = await productsQuery.CountAsync();
+
+            if (page.HasValue && limit.HasValue && page.Value > 0 && limit.Value > 0)
             {
-                productsQuery = productsQuery.Take(limit.Value);
+                int skip = (page.Value - 1) * limit.Value;
+                productsQuery = productsQuery.Skip(skip).Take(limit.Value);
             }
 
             var productsWithCategories = await productsQuery.ToListAsync();
 
-            return Ok(productsWithCategories);
+           
+            return Ok(new
+            {
+                TotalItems = totalItems,
+                data = productsWithCategories
+            });
         }
+
 
 
 
