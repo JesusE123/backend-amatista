@@ -25,26 +25,53 @@ namespace backendAmatista.Controllers
 
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListSales()
+        public async Task<IActionResult> ListSales([FromQuery] int limit, [FromQuery] int page, [FromQuery] string? query)
         {
-            var sales = await (from s in _dbamatistaContext.Sales
-                               join sd in _dbamatistaContext.SaleDetails on s.IdSale equals sd.IdSale
-                               join p in _dbamatistaContext.Products on sd.IdProduct equals p.IdProduct
-                               select new
-                               {
-                                   IdSale = s.IdSale,
-                                   ReceiptNumber = s.InvoiceNumber,
-                                   Total = sd.SubTotal, 
-                                   Customer = s.Customer,
-                                   PaymentMethod = s.PaymentMethod,
-                                   Remarks = s.Notes,
-                                   Date = s.Date,
-                                   ProductName = p.Name,
-                                   Quantity = sd.Quantity
-                               }).ToListAsync();
+            // Crear la consulta inicial para obtener todas las ventas
+            var salesQuery = from s in _dbamatistaContext.Sales
+                             join sd in _dbamatistaContext.SaleDetails on s.IdSale equals sd.IdSale
+                             join p in _dbamatistaContext.Products on sd.IdProduct equals p.IdProduct
+                             select new
+                             {
+                                 IdSale = s.IdSale,
+                                 ReceiptNumber = s.InvoiceNumber,
+                                 Total = sd.SubTotal,
+                                 Customer = s.Customer,
+                                 PaymentMethod = s.PaymentMethod,
+                                 Remarks = s.Notes,
+                                 Date = s.Date,
+                                 ProductName = p.Name,
+                                 Quantity = sd.Quantity
+                             };
 
-            return Ok(sales);
+            // Filtrar las ventas según el query proporcionado
+            if (!string.IsNullOrEmpty(query))
+            {
+                salesQuery = salesQuery.Where(s =>
+                   
+                    s.Customer.Contains(query) ||
+                    s.ProductName.Contains(query));
+            }
+
+            // Obtener el total de ventas antes de aplicar la paginación
+            var totalSales = await salesQuery.CountAsync();
+
+            // Aplicar la paginación
+            var sales = await salesQuery
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            // Devolver el resultado con las ventas paginadas y el total de ventas
+            return Ok(new
+            {
+                TotalSales = totalSales,
+                data = sales
+            });
         }
+
+
+
 
 
         [HttpPost]
