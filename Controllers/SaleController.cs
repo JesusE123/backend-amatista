@@ -26,8 +26,8 @@ namespace backendAmatista.Controllers
         [HttpGet]
         [Route("List")]
         public async Task<IActionResult> ListSales(
-     [FromQuery] int limit,
-     [FromQuery] int page,
+     [FromQuery] int? limit,
+     [FromQuery] int? page,
      [FromQuery] string? query,
      [FromQuery] DateTime? fromDate,
      [FromQuery] DateTime? toDate)
@@ -46,10 +46,9 @@ namespace backendAmatista.Controllers
                                  Remarks = s.Notes,
                                  Date = s.Date,
                                  ProductName = p.Name,
-                                
                              };
 
-            
+            // Filtrar las ventas según el query proporcionado
             if (!string.IsNullOrEmpty(query))
             {
                 salesQuery = salesQuery.Where(s =>
@@ -57,7 +56,6 @@ namespace backendAmatista.Controllers
                     s.ProductName.Contains(query));
             }
 
-            
             if (fromDate.HasValue)
             {
                 salesQuery = salesQuery.Where(s => s.Date >= fromDate.Value);
@@ -65,25 +63,42 @@ namespace backendAmatista.Controllers
 
             if (toDate.HasValue)
             {
-                salesQuery = salesQuery.Where(s => s.Date <= toDate.Value);
+                // Aumentar el toDate un día y restar un segundo para incluir hasta el final del día
+                var endDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                salesQuery = salesQuery.Where(s => s.Date <= endDate);
             }
 
-            
-            var totalSales = await salesQuery.CountAsync();
+            // Agrupar las ventas por ReceiptNumber y Customer
+            var groupedSales = salesQuery
+                .GroupBy(s => new { s.ReceiptNumber, s.Customer, s.PaymentMethod, s.Date })
+                .Select(g => new
+                {
+                    ReceiptNumber = g.Key.ReceiptNumber,
+                    Customer = g.Key.Customer,
+                    PaymentMethod = g.Key.PaymentMethod,
+                    Date = g.Key.Date,
+                    Total = g.Sum(x => x.Total), // Sumar el total de productos para el mismo recibo
+                    Products = g.Select(x => x.ProductName).Distinct().ToList() // Lista de productos comprados
+                });
 
-            
-            var sales = await salesQuery
-                .Skip((page - 1) * limit)
-                .Take(limit)
-                .ToListAsync();
+            // Obtener el total de ventas agrupadas antes de aplicar la paginación
+            var totalSales = await groupedSales.CountAsync();
 
-            
+            // Aplicar la paginación
+            if (page.HasValue && limit.HasValue && page.Value > 0 && limit.Value > 0)
+            {
+                int skip = (page.Value - 1) * limit.Value;
+                groupedSales = groupedSales.Skip(skip).Take(limit.Value);
+            }
+
+            // Devolver el resultado con las ventas paginadas y el total de ventas agrupadas
             return Ok(new
             {
                 TotalSales = totalSales,
-                data = sales
+                Data = groupedSales
             });
         }
+
 
 
 
