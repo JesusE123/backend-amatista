@@ -25,7 +25,12 @@ namespace backendAmatista.Controllers
 
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListSales([FromQuery] int limit, [FromQuery] int page, [FromQuery] string? query)
+        public async Task<IActionResult> ListSales(
+     [FromQuery] int limit,
+     [FromQuery] int page,
+     [FromQuery] string? query,
+     [FromQuery] DateTime? fromDate,
+     [FromQuery] DateTime? toDate)
         {
             // Crear la consulta inicial para obtener todas las ventas
             var salesQuery = from s in _dbamatistaContext.Sales
@@ -41,34 +46,45 @@ namespace backendAmatista.Controllers
                                  Remarks = s.Notes,
                                  Date = s.Date,
                                  ProductName = p.Name,
-                                 Quantity = sd.Quantity
+                                
                              };
 
-            // Filtrar las ventas según el query proporcionado
+            
             if (!string.IsNullOrEmpty(query))
             {
                 salesQuery = salesQuery.Where(s =>
-                   
                     s.Customer.Contains(query) ||
                     s.ProductName.Contains(query));
             }
 
-            // Obtener el total de ventas antes de aplicar la paginación
+            
+            if (fromDate.HasValue)
+            {
+                salesQuery = salesQuery.Where(s => s.Date >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                salesQuery = salesQuery.Where(s => s.Date <= toDate.Value);
+            }
+
+            
             var totalSales = await salesQuery.CountAsync();
 
-            // Aplicar la paginación
+            
             var sales = await salesQuery
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync();
 
-            // Devolver el resultado con las ventas paginadas y el total de ventas
+            
             return Ok(new
             {
                 TotalSales = totalSales,
                 data = sales
             });
         }
+
 
 
 
