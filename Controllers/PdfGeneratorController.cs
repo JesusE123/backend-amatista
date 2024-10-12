@@ -31,6 +31,8 @@ namespace BackendAmatista.Controllers
                                     InvoiceNumber = s.InvoiceNumber,
                                     Total = s.Total,
                                     Notes = s.Notes,
+                                    Date = s.Date,
+                                    paymentMethod = s.PaymentMethod,
                                     Codigo = p.Item
                                 }).ToListAsync();
 

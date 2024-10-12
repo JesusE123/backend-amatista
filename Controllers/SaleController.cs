@@ -22,13 +22,12 @@ namespace backendAmatista.Controllers
             _mapper = mapper;
         }
 
-
         [HttpGet]
         [Route("List")]
         public async Task<IActionResult> ListSales(
      [FromQuery] int? limit,
      [FromQuery] int? page,
-     [FromQuery] string? query,
+     [FromQuery] string query,
      [FromQuery] DateTime? fromDate,
      [FromQuery] DateTime? toDate)
         {
@@ -46,14 +45,15 @@ namespace backendAmatista.Controllers
                                  Remarks = s.Notes,
                                  Date = s.Date,
                                  ProductName = p.Name,
+                                 ProductItem = p.Item,
+                                 ProductPrice = p.Price,
+                                 Quantity = sd.Quantity // Renombrado a Quantity para mayor claridad
                              };
 
             // Filtrar las ventas según el query proporcionado
             if (!string.IsNullOrEmpty(query))
             {
-                salesQuery = salesQuery.Where(s =>
-                    s.Customer.Contains(query) ||
-                    s.ProductName.Contains(query));
+                salesQuery = salesQuery.Where(s => s.Customer == query);
             }
 
             if (fromDate.HasValue)
@@ -63,12 +63,11 @@ namespace backendAmatista.Controllers
 
             if (toDate.HasValue)
             {
-                // Aumentar el toDate un día y restar un segundo para incluir hasta el final del día
                 var endDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
                 salesQuery = salesQuery.Where(s => s.Date <= endDate);
             }
 
-            // Agrupar las ventas por ReceiptNumber y Customer
+            // Agrupar las ventas por ReceiptNumber, Customer, PaymentMethod y Date
             var groupedSales = salesQuery
                 .GroupBy(s => new { s.ReceiptNumber, s.Customer, s.PaymentMethod, s.Date })
                 .Select(g => new
@@ -77,27 +76,32 @@ namespace backendAmatista.Controllers
                     Customer = g.Key.Customer,
                     PaymentMethod = g.Key.PaymentMethod,
                     Date = g.Key.Date,
-                    Total = g.Sum(x => x.Total), // Sumar el total de productos para el mismo recibo
-                    Products = g.Select(x => x.ProductName).Distinct().ToList() // Lista de productos comprados
+                    Total = g.Sum(x => x.Total),
+                    Products = g.GroupBy(x => new { x.ProductItem, x.ProductName, x.ProductPrice })
+                                .Select(pg => new
+                                {
+                                    Name = pg.Key.ProductName,
+                                    Code = pg.Key.ProductItem,
+                                    Price = pg.Key.ProductPrice,
+                                    Quantity = pg.Sum(x => x.Quantity) // Sumar la cantidad de cada producto
+                                }).ToList()
                 });
 
-            // Obtener el total de ventas agrupadas antes de aplicar la paginación
             var totalSales = await groupedSales.CountAsync();
 
-            // Aplicar la paginación
             if (page.HasValue && limit.HasValue && page.Value > 0 && limit.Value > 0)
             {
                 int skip = (page.Value - 1) * limit.Value;
                 groupedSales = groupedSales.Skip(skip).Take(limit.Value);
             }
 
-            // Devolver el resultado con las ventas paginadas y el total de ventas agrupadas
             return Ok(new
             {
                 TotalSales = totalSales,
                 Data = groupedSales
             });
         }
+
 
 
 
@@ -114,10 +118,10 @@ namespace backendAmatista.Controllers
                 return BadRequest("SaleDetailDTO is null");
             }
 
-            // Mapea el DTO a la entidad
+            
             var saleDetail = _mapper.Map<SaleDetail>(saleDetailDto);
 
-            // Agrega la entidad a la base de datos
+           
             await _dbamatistaContext.SaleDetails.AddAsync(saleDetail);
             await _dbamatistaContext.SaveChangesAsync();
 
