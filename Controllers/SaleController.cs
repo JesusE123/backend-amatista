@@ -155,5 +155,45 @@ namespace backendAmatista.Controllers
 
             return Ok(new { IdSale = sale.IdSale });
         }
+
+        [HttpGet("top-customers")]
+        public async Task<IActionResult> GetTopCustomersForCurrentMonth()
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentMonth = DateTime.Now.Month;
+
+            var result = await (from s in _dbamatistaContext.Sales
+                                where s.Date.Year == currentYear && s.Date.Month == currentMonth
+                                group s by s.Customer into customerGroup
+                                orderby customerGroup.Sum(x => x.Total) descending
+                                select new
+                                {
+                                    CustomerName = customerGroup.Key,
+                                    TotalSpent = customerGroup.Sum(x => x.Total)
+                                }).Take(5).ToListAsync(); 
+            return Ok(result);
+        }
+
+        [HttpGet("total-revenue")]
+        public async Task<IActionResult> GetTotalRevenueForCurrentMonth()
+        {
+            var currentDate = DateTime.Now;
+            var threeMonthsAgo = currentDate.AddMonths(-3);
+
+            var totalRevenueLastThreeMonths = await (from s in _dbamatistaContext.Sales
+                                                     where s.Date >= threeMonthsAgo && s.Date <= currentDate
+                                                     group s by new { s.Date.Year, s.Date.Month } into monthlyGroup
+                                                     orderby monthlyGroup.Key.Year descending, monthlyGroup.Key.Month descending
+                                                     select new
+                                                     {
+                                                         Month = new DateTime(monthlyGroup.Key.Year, monthlyGroup.Key.Month, 1).ToString("MMMM yyyy"),
+                                                         TotalRevenue = monthlyGroup.Sum(x => x.Total)
+                                                     }).ToListAsync();
+
+            return Ok(totalRevenueLastThreeMonths);
+        }
+
+
+
     }
 }

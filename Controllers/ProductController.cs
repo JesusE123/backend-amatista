@@ -207,5 +207,28 @@ namespace BackendAmatista.Controllers
         }
 
 
+        [HttpGet("top-selling-products")]
+        public async Task<IActionResult> GetTopSellingProductsForCurrentMonth()
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentMonth = DateTime.Now.Month;
+
+            var result = await (from sd in _dbamatistaContext.SaleDetails
+                                join s in _dbamatistaContext.Sales on sd.IdSale equals s.IdSale
+                                join p in _dbamatistaContext.Products on sd.IdProduct equals p.IdProduct
+                                where s.Date.Year == currentYear && s.Date.Month == currentMonth
+                                group sd by p.Name into productGroup
+                                orderby productGroup.Sum(x => x.Quantity) descending
+                                select new
+                                {
+                                    ProductName = productGroup.Key,
+                                    TotalQuantitySold = productGroup.Sum(x => x.Quantity)
+                                })
+                                .Take(4) // Limitar a los primeros 5 productos
+                                .ToListAsync();
+
+            return Ok(result);
+        }
     }
+
 }
