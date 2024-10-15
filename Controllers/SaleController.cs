@@ -170,7 +170,7 @@ namespace backendAmatista.Controllers
                                 {
                                     CustomerName = customerGroup.Key,
                                     TotalSpent = customerGroup.Sum(x => x.Total)
-                                }).Take(5).ToListAsync(); 
+                                }).Take(3).ToListAsync(); 
             return Ok(result);
         }
 
