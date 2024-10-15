@@ -19,5 +19,7 @@ public partial class Sale
 
     public DateTime Date { get; set; }
 
+    public string? Cuit { get; set; }
+
     public virtual ICollection<SaleDetail> SaleDetails { get; set; } = new List<SaleDetail>();
 }

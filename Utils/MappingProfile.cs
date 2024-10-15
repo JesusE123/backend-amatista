@@ -27,14 +27,18 @@ namespace backend_amatista.Utils
                 .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total))
                 .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer))
                 .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
-                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes));
+                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes))
+                .ForMember(dest => dest.Cuit, opt => opt.MapFrom(src => src.Cuit));
+
+
 
             CreateMap<SaleDTO, Sale>()
                 .ForMember(dest => dest.InvoiceNumber, opt => opt.MapFrom(src => src.InvoiceNumber))
                 .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total))
                 .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer))
                 .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
-                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes));
+                .ForMember(dest => dest.Notes, opt => opt.MapFrom(src => src.Notes))
+                .ForMember(dest => dest.Cuit, opt => opt.MapFrom(src => src.Cuit));
 
 
         }

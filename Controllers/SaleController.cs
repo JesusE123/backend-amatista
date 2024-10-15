@@ -47,13 +47,15 @@ namespace backendAmatista.Controllers
                                  ProductName = p.Name,
                                  ProductItem = p.Item,
                                  ProductPrice = p.Price,
-                                 Quantity = sd.Quantity // Renombrado a Quantity para mayor claridad
+                                 Quantity = sd.Quantity,
+                                 Cuit = s.Cuit
+
                              };
 
             // Filtrar las ventas según el query proporcionado
             if (!string.IsNullOrEmpty(query))
             {
-                salesQuery = salesQuery.Where(s => s.Customer == query);
+                salesQuery = salesQuery.Where(s => s.Cuit.Contains(query) || s.Customer.Contains(query));
             }
 
             if (fromDate.HasValue)
@@ -164,13 +166,15 @@ namespace backendAmatista.Controllers
 
             var result = await (from s in _dbamatistaContext.Sales
                                 where s.Date.Year == currentYear && s.Date.Month == currentMonth
-                                group s by s.Customer into customerGroup
+                                group s by new { s.Customer, s.Cuit } into customerGroup
                                 orderby customerGroup.Sum(x => x.Total) descending
                                 select new
                                 {
-                                    CustomerName = customerGroup.Key,
+                                    CustomerName = customerGroup.Key.Customer,
+                                    Cuit = customerGroup.Key.Cuit,
                                     TotalSpent = customerGroup.Sum(x => x.Total)
-                                }).Take(3).ToListAsync(); 
+                                }).Take(3).ToListAsync();
+
             return Ok(result);
         }
 
