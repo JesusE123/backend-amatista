@@ -48,7 +48,9 @@ namespace backendAmatista.Controllers
                                  ProductItem = p.Item,
                                  ProductPrice = p.Price,
                                  Quantity = sd.Quantity,
-                                 Cuit = s.Cuit
+                                 Cuit = s.Cuit,
+                                 PhoneNumber= s.PhoneNumber,
+                                 Discount = s.Discount,
 
                              };
 
@@ -71,13 +73,16 @@ namespace backendAmatista.Controllers
 
             // Agrupar las ventas por ReceiptNumber, Customer, PaymentMethod y Date
             var groupedSales = salesQuery
-                .GroupBy(s => new { s.ReceiptNumber, s.Customer, s.PaymentMethod, s.Date })
+                .GroupBy(s => new { s.ReceiptNumber, s.Customer, s.PaymentMethod, s.Date, s.Cuit, s.PhoneNumber, s.Discount })
                 .Select(g => new
                 {
                     ReceiptNumber = g.Key.ReceiptNumber,
                     Customer = g.Key.Customer,
                     PaymentMethod = g.Key.PaymentMethod,
                     Date = g.Key.Date,
+                    Cuit = g.Key.Cuit,
+                    phoneNumber = g.Key.PhoneNumber,
+                    Discount = g.Key.Discount,
                     Total = g.Sum(x => x.Total),
                     Products = g.GroupBy(x => new { x.ProductItem, x.ProductName, x.ProductPrice })
                                 .Select(pg => new

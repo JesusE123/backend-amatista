@@ -21,5 +21,9 @@ public partial class Sale
 
     public string? Cuit { get; set; }
 
+    public decimal? Discount { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
     public virtual ICollection<SaleDetail> SaleDetails { get; set; } = new List<SaleDetail>();
 }

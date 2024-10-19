@@ -19,8 +19,6 @@ public partial class Product
     public string? Item { get; set; }
 
     public bool Active { get; set; }
-
-
     [JsonIgnore]
     public virtual Category IdCategoryNavigation { get; set; } = null!;
 

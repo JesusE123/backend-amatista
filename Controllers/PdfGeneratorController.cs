@@ -27,6 +27,7 @@ namespace BackendAmatista.Controllers
                                     ProductName = p.Name,
                                     Quantity = sd.Quantity,
                                     SubTotal = sd.SubTotal,
+                                    price = p.Price,
                                     Customer = s.Customer,
                                     InvoiceNumber = s.InvoiceNumber,
                                     Total = s.Total,

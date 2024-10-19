@@ -8,6 +8,9 @@ namespace backendAmatista.Models.DTO
         public decimal Total { get; set; }
         public string Customer { get; set; } = string.Empty;
 
+        public decimal? Discount { get; set; }
+
+        public string? PhoneNumber { get; set; }
         public string Cuit { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = string.Empty;
         public string? Notes { get; set; }
