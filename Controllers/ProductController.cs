@@ -19,17 +19,17 @@ namespace BackendAmatista.Controllers
         }
         [HttpGet]
         [Route("List")]
-        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? page, [FromQuery] int? limit, [FromQuery] int? idCategory)
+        public async Task<IActionResult> ListProducts([FromQuery] string? query, [FromQuery] int? page, [FromQuery] int? limit, [FromQuery] int? idCategory, [FromQuery] bool filterLowStock = false)
         {
             var productsQuery = _dbamatistaContext.Products
-                .Where(p => p.Active) 
+                .Where(p => p.Active)
                 .Join(
                     _dbamatistaContext.Categories,
                     product => product.IdCategory,
                     category => category.IdCategory,
                     (product, category) => new
                     {
-                        id = product.IdProduct,
+                        Id = product.IdProduct,
                         Name = product.Name,
                         Price = product.Price,
                         Item = product.Item,
@@ -57,25 +57,32 @@ namespace BackendAmatista.Controllers
                 );
             }
 
+           
+            if (filterLowStock)
+            {
+                productsQuery = productsQuery.Where(p => p.Stock < 15);
+            }
+
             
             int totalItems = await productsQuery.CountAsync();
 
+            
             if (page.HasValue && limit.HasValue && page.Value > 0 && limit.Value > 0)
             {
                 int skip = (page.Value - 1) * limit.Value;
                 productsQuery = productsQuery.Skip(skip).Take(limit.Value);
             }
 
+           
             var productsWithCategories = await productsQuery.ToListAsync();
 
            
             return Ok(new
             {
                 TotalItems = totalItems,
-                data = productsWithCategories
+                Data = productsWithCategories
             });
         }
-
 
 
 
