@@ -27,7 +27,7 @@ namespace backendAmatista.Controllers
         public async Task<IActionResult> ListSales(
      [FromQuery] int? limit,
      [FromQuery] int? page,
-     [FromQuery] string query,
+     [FromQuery] string? query,
      [FromQuery] DateTime? fromDate,
      [FromQuery] DateTime? toDate)
         {
@@ -49,17 +49,17 @@ namespace backendAmatista.Controllers
                                  ProductPrice = p.Price,
                                  Quantity = sd.Quantity,
                                  Cuit = s.Cuit,
-                                 PhoneNumber= s.PhoneNumber,
+                                 PhoneNumber = s.PhoneNumber,
                                  Discount = s.Discount,
-
                              };
 
-            // Filtrar las ventas según el query proporcionado
+            // Filtrar por query si está presente
             if (!string.IsNullOrEmpty(query))
             {
                 salesQuery = salesQuery.Where(s => s.Cuit.Contains(query) || s.Customer.Contains(query));
             }
 
+            // Filtrar por rango de fechas si se proporciona `fromDate` y/o `toDate`
             if (fromDate.HasValue)
             {
                 salesQuery = salesQuery.Where(s => s.Date >= fromDate.Value);
@@ -67,11 +67,12 @@ namespace backendAmatista.Controllers
 
             if (toDate.HasValue)
             {
+                // Ajustar `toDate` al final del día para incluir todo el día especificado
                 var endDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
                 salesQuery = salesQuery.Where(s => s.Date <= endDate);
             }
 
-            // Agrupar las ventas por ReceiptNumber, Customer, PaymentMethod y Date
+            // Agrupar las ventas por campos especificados
             var groupedSales = salesQuery
                 .GroupBy(s => new { s.ReceiptNumber, s.Customer, s.PaymentMethod, s.Date, s.Cuit, s.PhoneNumber, s.Discount })
                 .Select(g => new
@@ -81,7 +82,7 @@ namespace backendAmatista.Controllers
                     PaymentMethod = g.Key.PaymentMethod,
                     Date = g.Key.Date,
                     Cuit = g.Key.Cuit,
-                    phoneNumber = g.Key.PhoneNumber,
+                    PhoneNumber = g.Key.PhoneNumber,
                     Discount = g.Key.Discount,
                     Total = g.Sum(x => x.Total),
                     Products = g.GroupBy(x => new { x.ProductItem, x.ProductName, x.ProductPrice })
@@ -90,12 +91,14 @@ namespace backendAmatista.Controllers
                                     Name = pg.Key.ProductName,
                                     Code = pg.Key.ProductItem,
                                     Price = pg.Key.ProductPrice,
-                                    Quantity = pg.Sum(x => x.Quantity) // Sumar la cantidad de cada producto
+                                    Quantity = pg.Sum(x => x.Quantity)
                                 }).ToList()
                 });
 
+            // Obtener el total de ventas después del agrupamiento y filtrado
             var totalSales = await groupedSales.CountAsync();
 
+            // Aplicar paginación si se especifican `page` y `limit`
             if (page.HasValue && limit.HasValue && page.Value > 0 && limit.Value > 0)
             {
                 int skip = (page.Value - 1) * limit.Value;
@@ -108,6 +111,7 @@ namespace backendAmatista.Controllers
                 Data = groupedSales
             });
         }
+
 
 
 
